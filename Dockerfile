@@ -26,9 +26,9 @@ ENV FLASK_ENV=production
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
 
-# Открытие порта
+# Открытие порта (Railway задаёт переменную PORT)
 EXPOSE 5000
 
-# Команда запуска
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "app:app"]
+# Команда запуска: биндим на $PORT, по умолчанию 5000
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 app:app"]
 
