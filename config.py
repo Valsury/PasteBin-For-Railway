@@ -30,6 +30,7 @@ class Config:
     # AI настройки (если используется)
     OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
     OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama2')
+    AI_ENABLED = os.getenv('AI_ENABLED', 'false').lower() == 'true'
 
 class DevelopmentConfig(Config):
     """Конфигурация для разработки"""

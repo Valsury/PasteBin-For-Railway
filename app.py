@@ -27,8 +27,17 @@ db.init_app(app)
 # Инициализация файлового хранилища
 storage = FileStorage()
 
-# Инициализация AI-помощника
-ai_helper = OllamaHelper()
+# Инициализация AI-помощника (может быть отключён через AI_ENABLED)
+ai_helper = None
+try:
+    if app.config.get('AI_ENABLED', False):
+        ai_helper = OllamaHelper(base_url=app.config.get('OLLAMA_HOST'))
+        print(f"AI включен. OLLAMA_HOST={app.config.get('OLLAMA_HOST')}")
+    else:
+        print("AI отключен (AI_ENABLED=false)")
+except Exception as e:
+    ai_helper = None
+    print(f"AI инициализация отключена из-за ошибки: {e}")
 
 # Регистрируем фильтр nl2br для преобразования переносов строк в HTML
 @app.template_filter('nl2br')
@@ -524,6 +533,8 @@ def ping():
 @app.route('/ai/status')
 def ai_status():
     """Статус AI-помощника"""
+    if not ai_helper:
+        return jsonify({'available': False, 'disabled': True}), 200
     return jsonify({
         'available': ai_helper.is_available(),
         'model': ai_helper.model,
@@ -533,6 +544,8 @@ def ai_status():
 @app.route('/ai/models')
 def ai_models():
     """Список доступных моделей"""
+    if not ai_helper:
+        return jsonify({'models': [], 'current': None, 'disabled': True}), 200
     return jsonify({
         'models': ai_helper.get_available_models(),
         'current': ai_helper.model
@@ -625,6 +638,8 @@ def ai_set_model():
     data = request.get_json()
     model_name = data.get('model')
     
+    if not ai_helper:
+        return jsonify({'success': False, 'error': 'AI отключен'}), 503
     if ai_helper.set_model(model_name):
         return jsonify({'success': True, 'model': model_name})
     else:
@@ -637,6 +652,8 @@ def ai_generate_text():
     """Универсальный эндпоинт для генерации текста"""
     data = request.get_json()
     
+    if not ai_helper:
+        return jsonify({'error': 'AI отключен'}), 503
     if not ai_helper.is_available():
         return jsonify({'error': 'AI-сервер недоступен'}), 503
     
@@ -705,6 +722,8 @@ def ai_generate_code():
     """Генерация кода (для обратной совместимости)"""
     data = request.get_json()
     
+    if not ai_helper:
+        return jsonify({'error': 'AI отключен'}), 503
     if not ai_helper.is_available():
         return jsonify({'error': 'AI-сервер недоступен'}), 503
     
@@ -736,6 +755,8 @@ def ai_improve_code():
     """Улучшение кода"""
     data = request.get_json()
     
+    if not ai_helper:
+        return jsonify({'error': 'AI отключен'}), 503
     if not ai_helper.is_available():
         return jsonify({'error': 'AI-сервер недоступен'}), 503
     
@@ -768,6 +789,8 @@ def ai_explain_code():
     """Объяснение кода"""
     data = request.get_json()
     
+    if not ai_helper:
+        return jsonify({'error': 'AI отключен'}), 503
     if not ai_helper.is_available():
         return jsonify({'error': 'AI-сервер недоступен'}), 503
     
